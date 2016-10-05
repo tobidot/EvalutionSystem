@@ -110,15 +110,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="EntityBase.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="RenderData.cpp" />
+    <ClCompile Include="RenderParameter.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="UsedExceptions.cpp" />
     <ClCompile Include="WorldBase.cpp" />
     <ClCompile Include="WorldRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="EntityBase.h" />
+    <ClInclude Include="RenderData.h" />
+    <ClInclude Include="RenderParameter.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="UsedExceptions.h" />
     <ClInclude Include="WorldBase.h" />
     <ClInclude Include="WorldRenderer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="EvalutionSystem.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
