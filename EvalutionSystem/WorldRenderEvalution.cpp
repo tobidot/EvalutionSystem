@@ -8,6 +8,7 @@
 #include <consoleapi.h>
 #include <iomanip>
 #include <stdint.h>
+#include <assert.h>
 
 COLORREF COLORREF_of(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -18,6 +19,18 @@ WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : rende
 {
 	my_console_output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	my_console_input_handle = GetStdHandle(STD_INPUT_HANDLE);
+	my_consol_window_handle = GetConsoleWindow();
+	my_consol_menu = GetSystemMenu(my_consol_window_handle, false);
+	my_screen_size = { 80,30 };
+	my_screen_rect = { 0,0,80,30 };
+	my_screen_buffer = new CHAR_INFO[my_screen_size.X * my_screen_size.Y];
+	assert(my_screen_buffer);
+	for (WORD i = 0; i < my_screen_size.X * my_screen_size.Y; ++i)
+	{
+		my_screen_buffer[i].Attributes = FOREGROUND_BLUE | BACKGROUND_RED;
+		my_screen_buffer[i].Char.AsciiChar = 'X';
+	}
+	assert(my_console_input_handle && my_console_output_handle && my_consol_menu && my_consol_window_handle );
 	initialize_console();
 }
 
@@ -47,6 +60,14 @@ void WorldRenderEvalution::initialize_console()
 		COLORREF_of(0,255,255),
 		COLORREF_of(255,255,255),
 	};
+
+	// delete some menu-options to prevent the user from resizing
+	//DeleteMenu(sysMenu, SC_CLOSE, MF_BYCOMMAND);
+	DeleteMenu(my_consol_menu, SC_MINIMIZE, MF_BYCOMMAND);
+	DeleteMenu(my_consol_menu, SC_MAXIMIZE, MF_BYCOMMAND);
+	DeleteMenu(my_consol_menu, SC_SIZE, MF_BYCOMMAND);
+
+
 	// make Cursor invisible
 	CONSOLE_CURSOR_INFO cursor_info = CONSOLE_CURSOR_INFO();
 	cursor_info.bVisible = false;
@@ -72,7 +93,7 @@ void WorldRenderEvalution::initialize_console()
 	screen_info.wPopupAttributes = BACKGROUND_RED | FOREGROUND_BLUE;
 
 	// initialize EventMode
-	DWORD console_mode = ENABLE_WINDOW_INPUT;
+	DWORD console_mode = ENABLE_MOUSE_INPUT;
 
 	if (!SetConsoleMode(my_console_input_handle, console_mode))
 	{
@@ -96,42 +117,12 @@ void WorldRenderEvalution::render_entity(base::EntityBase *const entity, const f
 	entity->for_all_renderpacks([this,deltaTime](render::RenderData &pack) {render_data(pack,deltaTime); });
 }
 
-int cEvent = 0;
-
 void WorldRenderEvalution::step(const float deltaTime)
 {
-	INPUT_RECORD *input_list = new INPUT_RECORD[16];
-	DWORD count = 0;
-		PeekConsoleInput(my_console_input_handle, input_list, 16, &count);
-	if (count > 0)
-	{
-		ReadConsoleInput(my_console_input_handle, input_list, 16, &count);
-	}
-	for (DWORD i = 0; i < count; ++i)
-	{
-		INPUT_RECORD &input = input_list[i];
-		if (input.EventType == WINDOW_BUFFER_SIZE_EVENT)
-		{
-			WINDOW_BUFFER_SIZE_RECORD &event = input.Event.WindowBufferSizeEvent;
-		}
-	}
-	delete input_list;
-	++cEvent;
-	if (cEvent % 10000 == 0)
-	{
-		char str[80];
-		sprintf_s(str, 80, "number %d", cEvent);
-		SetConsoleTitle(str);
-
-		SMALL_RECT rect = { 0,0,50,30 };
-		//SetConsoleWindowInfo(my_console_input_handle, true, &rect);
-		SetConsoleWindowInfo(my_console_output_handle, true, &rect);
-		COORD size = { 50,30 };
-		//SetConsoleScreenBufferSize(my_console_input_handle, size);
-		SetConsoleScreenBufferSize(my_console_output_handle, size);
-	}
-
+	process_console_inputs(deltaTime);
+	// do a update for all renderObjects
 	WorldRenderer::step(deltaTime);
+	WriteConsoleOutput(my_console_output_handle, my_screen_buffer, my_screen_size, { 0,0 }, &my_screen_rect);
 }
 
 void WorldRenderEvalution::render_data(render::RenderData & pack, const float deltaTime)
@@ -193,11 +184,14 @@ void WorldRenderEvalution::render_text_data(render::RenderData & pack, const flo
 
 	if (text != nullptr)
 	{
-		HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-		COORD position = { start_collum, row };
-
-		SetConsoleCursorPosition(hStdout, position);
-		std::cout << std::setfill(' ') << std::setw(collums_to_write) << text;
+		for (WORD i = 0; i < collums_to_write; ++i)
+		{
+			// TODO 
+			// safety check
+			// and updatecheck
+			if (text[i] == 0) break;
+			my_screen_buffer[start_collum * my_screen_size.X + i + row].Char.AsciiChar = text[i];
+		}
 	}
 	else
 	{
@@ -205,4 +199,51 @@ void WorldRenderEvalution::render_text_data(render::RenderData & pack, const flo
 	}
 
 
+}
+
+void WorldRenderEvalution::process_console_inputs(const float deltaTime)
+{
+	// input management 
+	DWORD events_on_stack = 0;
+	DWORD read_events = 0;
+	INPUT_RECORD *input_list = nullptr;
+	GetNumberOfConsoleInputEvents(my_console_input_handle, &events_on_stack);
+	if (events_on_stack > 0)
+	{
+		input_list = new INPUT_RECORD[events_on_stack];
+		ReadConsoleInput(my_console_input_handle, input_list, events_on_stack, &read_events);
+		for (DWORD i = 0; i < read_events; ++i)
+		{
+			INPUT_RECORD &input = input_list[i];
+			switch (input.EventType)
+			{
+				case WINDOW_BUFFER_SIZE_EVENT:
+				{
+					WINDOW_BUFFER_SIZE_RECORD &event = input.Event.WindowBufferSizeEvent;
+				}
+				break;
+				case MOUSE_EVENT:
+				{
+					MOUSE_EVENT_RECORD &event = input.Event.MouseEvent;
+				}
+				break;
+				case MENU_EVENT:
+				{
+					MENU_EVENT_RECORD &event = input.Event.MenuEvent;
+				}
+				break;
+				case KEY_EVENT:
+				{
+					KEY_EVENT_RECORD &event = input.Event.KeyEvent;
+				}
+				break;	
+				case FOCUS_EVENT:
+				{
+					FOCUS_EVENT_RECORD &event = input.Event.FocusEvent;
+				}
+				break;
+			}
+		}
+		delete input_list;
+	}
 }
