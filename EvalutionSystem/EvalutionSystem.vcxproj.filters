@@ -5,65 +5,110 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Basis">
+      <UniqueIdentifier>{0d1b9bd4-2960-4f99-bf59-b587c7d3cc7f}</UniqueIdentifier>
+      <Extensions>
+      </Extensions>
+    </Filter>
+    <Filter Include="Basis\Header">
+      <UniqueIdentifier>{53065e15-a1f7-4d94-8857-1c7318e2f23f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Basis\Quell">
+      <UniqueIdentifier>{684b73ca-e62e-495e-944f-bef3018c86e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{e37f1103-98e8-4551-8276-b70ab845efc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Evo-Calculator">
+      <UniqueIdentifier>{e3024f5c-7230-43ed-9777-e49e479ec5aa}</UniqueIdentifier>
+      <Extensions>cpp;h</Extensions>
+    </Filter>
     <Filter Include="Headerdateien">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Ressourcendateien">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="TEST">
+      <UniqueIdentifier>{b94b1a16-f9db-4a53-bad0-768c2d64e714}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="WorldBase.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="WorldRenderer.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="UsedExceptions.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="EntityBase.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Basis\Quell</Filter>
     </ClCompile>
     <ClCompile Include="RenderData.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Basis\Quell</Filter>
     </ClCompile>
     <ClCompile Include="RenderParameter.cpp">
-      <Filter>Quelldateien</Filter>
+      <Filter>Basis\Quell</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldBase.cpp">
+      <Filter>Basis\Quell</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldRenderer.cpp">
+      <Filter>Basis\Quell</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="UsedExceptions.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldRenderEvalution.cpp">
+      <Filter>Evo-Calculator</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldEvalution.cpp">
+      <Filter>Evo-Calculator</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityTest.cpp">
+      <Filter>TEST</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityInfoLine.cpp">
+      <Filter>TEST</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WorldBase.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="WorldRenderer.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="UsedExceptions.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="EntityBase.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Basis\Header</Filter>
     </ClInclude>
     <ClInclude Include="RenderData.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Basis\Header</Filter>
     </ClInclude>
     <ClInclude Include="RenderParameter.h">
-      <Filter>Headerdateien</Filter>
+      <Filter>Basis\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldBase.h">
+      <Filter>Basis\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldRenderer.h">
+      <Filter>Basis\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="UsedExceptions.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldRenderEvalution.h">
+      <Filter>Evo-Calculator</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldEvalution.h">
+      <Filter>Evo-Calculator</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityTest.h">
+      <Filter>TEST</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityInfoLine.h">
+      <Filter>TEST</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

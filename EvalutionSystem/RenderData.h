@@ -23,6 +23,41 @@ namespace render
 		std::vector<RenderParameter*> data;
 		RenderData();
 		virtual ~RenderData();
+
+		void set_position(float x, float y, float width);
+		template<class TYPE> TYPE *const get_package() const;
+		template<class TYPE> TYPE *const get_package();
+
 	};
+
+	template<class TYPE>
+	TYPE * const RenderData::get_package() const
+	{
+		for (RenderParameter *param : data)
+		{
+			if (param->type_id == TYPE::TYPE_ID)
+			{
+				return static_cast<TYPE*>(param);
+			}
+		}
+		// no package found -> create one
+		return nullptr;
+	}
+
+	template<class TYPE>
+	TYPE * const RenderData::get_package()
+	{
+		for (RenderParameter *param : data)
+		{
+			if (param->type_id == TYPE::TYPE_ID)
+			{
+				return static_cast<TYPE*>(param);
+			}
+		}
+		// no package found -> create one
+		TYPE *param = new TYPE();
+		this->data.insert( this->data.end(), param);
+		return param;
+	}
 
 }

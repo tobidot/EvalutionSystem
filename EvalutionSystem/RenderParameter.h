@@ -1,4 +1,5 @@
 #pragma once
+#include <consoleapi.h>
 
 namespace render
 {
@@ -28,8 +29,8 @@ namespace render
 	{
 	protected:
 		static size_t NEXT_RENDER_PARAMETER_ID;
-	public:
 		static size_t get_next_render_parameter_id() { return NEXT_RENDER_PARAMETER_ID++; };
+	public:
 	public:
 		size_t type_id = 0;
 		RenderParameter(const size_t id) : type_id(id) {};
@@ -48,5 +49,12 @@ namespace render
 		Color forground;
 		Color background;
 		RenderParameterColor() : RenderParameter(TYPE_ID) {};
+	};
+
+	struct RenderParameterText : RenderParameter
+	{
+		static const size_t TYPE_ID;
+		char *text;
+		RenderParameterText() : RenderParameter(TYPE_ID) {};
 	};
 }

@@ -111,23 +111,31 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EntityBase.cpp" />
+    <ClCompile Include="EntityInfoLine.cpp" />
+    <ClCompile Include="EntityTest.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="RenderData.cpp" />
     <ClCompile Include="RenderParameter.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="UsedExceptions.cpp" />
     <ClCompile Include="WorldBase.cpp" />
+    <ClCompile Include="WorldEvalution.cpp" />
     <ClCompile Include="WorldRenderer.cpp" />
+    <ClCompile Include="WorldRenderEvalution.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EntityBase.h" />
+    <ClInclude Include="EntityInfoLine.h" />
+    <ClInclude Include="EntityTest.h" />
     <ClInclude Include="RenderData.h" />
     <ClInclude Include="RenderParameter.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UsedExceptions.h" />
     <ClInclude Include="WorldBase.h" />
+    <ClInclude Include="WorldEvalution.h" />
     <ClInclude Include="WorldRenderer.h" />
+    <ClInclude Include="WorldRenderEvalution.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EvalutionSystem.rc" />
