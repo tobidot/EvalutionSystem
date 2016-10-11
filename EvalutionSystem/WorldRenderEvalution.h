@@ -16,6 +16,7 @@ private:
 	COORD my_screen_size;
 	SMALL_RECT my_screen_rect;
 	CHAR_INFO *my_screen_buffer;
+	bool my_screen_is_updated;
 public:
 	WorldRenderEvalution(base::WorldBase *const world);
 	virtual ~WorldRenderEvalution();

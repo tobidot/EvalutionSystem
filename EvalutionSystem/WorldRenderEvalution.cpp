@@ -17,20 +17,23 @@ COLORREF COLORREF_of(uint8_t r, uint8_t g, uint8_t b)
 
 WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : render::WorldRenderer(world)
 {
+	// get handles
 	my_console_output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	my_console_input_handle = GetStdHandle(STD_INPUT_HANDLE);
 	my_consol_window_handle = GetConsoleWindow();
 	my_consol_menu = GetSystemMenu(my_consol_window_handle, false);
+	assert(my_console_input_handle && my_console_output_handle && my_consol_menu && my_consol_window_handle );
+	// screen
+	my_screen_is_updated = true;
 	my_screen_size = { 80,30 };
-	my_screen_rect = { 0,0,80,30 };
+	my_screen_rect = { 0,0,79,29 };
 	my_screen_buffer = new CHAR_INFO[my_screen_size.X * my_screen_size.Y];
 	assert(my_screen_buffer);
 	for (WORD i = 0; i < my_screen_size.X * my_screen_size.Y; ++i)
 	{
-		my_screen_buffer[i].Attributes = FOREGROUND_BLUE | BACKGROUND_RED;
+		my_screen_buffer[i].Attributes = FOREGROUND_BLUE | BACKGROUND_GREEN;
 		my_screen_buffer[i].Char.AsciiChar = 'X';
 	}
-	assert(my_console_input_handle && my_console_output_handle && my_consol_menu && my_consol_window_handle );
 	initialize_console();
 }
 
@@ -65,7 +68,7 @@ void WorldRenderEvalution::initialize_console()
 	//DeleteMenu(sysMenu, SC_CLOSE, MF_BYCOMMAND);
 	DeleteMenu(my_consol_menu, SC_MINIMIZE, MF_BYCOMMAND);
 	DeleteMenu(my_consol_menu, SC_MAXIMIZE, MF_BYCOMMAND);
-	DeleteMenu(my_consol_menu, SC_SIZE, MF_BYCOMMAND);
+	//DeleteMenu(my_consol_menu, SC_SIZE, MF_BYCOMMAND);
 
 
 	// make Cursor invisible
@@ -76,19 +79,19 @@ void WorldRenderEvalution::initialize_console()
 
 	// set Console Info
 	CONSOLE_SCREEN_BUFFER_INFOEX screen_info = CONSOLE_SCREEN_BUFFER_INFOEX();
-	screen_info.bFullscreenSupported = true;
+	screen_info.bFullscreenSupported = false;
 	screen_info.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
 	for (size_t i = 0; i < 16; ++i) screen_info.ColorTable[i] = color_table[i];
 	screen_info.dwCursorPosition.X = 0;
 	screen_info.dwCursorPosition.Y = 0;
-	screen_info.dwMaximumWindowSize.X = 80;
-	screen_info.dwMaximumWindowSize.Y = 30;
-	screen_info.dwSize.X = 80;
-	screen_info.dwSize.Y = 30;
+	screen_info.dwMaximumWindowSize.X = 0;
+	screen_info.dwMaximumWindowSize.Y = 0;
+	screen_info.dwSize.X = 69;
+	screen_info.dwSize.Y = 10;
 	screen_info.srWindow.Left = 0;
-	screen_info.srWindow.Right = 30;
+	screen_info.srWindow.Right = 0;
 	screen_info.srWindow.Top = 0;
-	screen_info.srWindow.Bottom = 30;
+	screen_info.srWindow.Bottom = 0;
 	screen_info.wAttributes = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY;
 	screen_info.wPopupAttributes = BACKGROUND_RED | FOREGROUND_BLUE;
 
@@ -105,6 +108,7 @@ void WorldRenderEvalution::initialize_console()
 		throw UsedExceptions::ExtendedException("Unable to set cursor.");
 		return;
 	};
+	
 	if (!SetConsoleScreenBufferInfoEx(my_console_output_handle, &screen_info) )
 	{
 		throw UsedExceptions::ExtendedException("Unable to set consolebuffer.");
@@ -122,7 +126,15 @@ void WorldRenderEvalution::step(const float deltaTime)
 	process_console_inputs(deltaTime);
 	// do a update for all renderObjects
 	WorldRenderer::step(deltaTime);
-	WriteConsoleOutput(my_console_output_handle, my_screen_buffer, my_screen_size, { 0,0 }, &my_screen_rect);
+	if ( my_screen_is_updated )
+	{
+		WriteConsoleOutput(my_console_output_handle, my_screen_buffer, my_screen_size, { 0,0 }, &my_screen_rect);
+		// TODO test y_screen rect
+		char str[80];
+		sprintf_s(str, "%d,%d   %d,%d", my_screen_rect.Left, my_screen_rect.Right, my_screen_rect.Top, my_screen_rect.Bottom );
+		SetConsoleTitle(str);
+		//my_screen_is_updated = false;
+	}
 }
 
 void WorldRenderEvalution::render_data(render::RenderData & pack, const float deltaTime)
@@ -190,7 +202,15 @@ void WorldRenderEvalution::render_text_data(render::RenderData & pack, const flo
 			// safety check
 			// and updatecheck
 			if (text[i] == 0) break;
-			my_screen_buffer[start_collum * my_screen_size.X + i + row].Char.AsciiChar = text[i];
+			WORD index = start_collum * my_screen_size.X + i + row;
+			if (index < my_screen_size.X * my_screen_size.Y)
+			{
+				if (my_screen_buffer[index].Char.AsciiChar != text[i])
+				{
+					my_screen_buffer[index].Char.AsciiChar = text[i];
+					my_screen_is_updated = true;
+				}
+			}
 		}
 	}
 	else
