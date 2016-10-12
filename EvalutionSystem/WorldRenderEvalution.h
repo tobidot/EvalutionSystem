@@ -8,14 +8,14 @@ class WorldRenderEvalution : public render::WorldRenderer
 private:
 private:
 	// consol and window handles
-	HANDLE my_console_input_handle;
-	HANDLE my_console_output_handle;
-	HMENU my_consol_menu;
-	HWND my_consol_window_handle;
+	HANDLE my_console_input_handle = nullptr;
+	HANDLE my_console_output_handle = nullptr;
+	HMENU my_consol_menu = nullptr;
+	HWND my_consol_window_handle = nullptr;
 	// console definitions
 	COORD my_screen_size;
 	SMALL_RECT my_screen_rect;
-	CHAR_INFO *my_screen_buffer;
+	CHAR_INFO *my_screen_buffer = nullptr;
 	bool my_screen_is_updated;
 public:
 	WorldRenderEvalution(base::WorldBase *const world);

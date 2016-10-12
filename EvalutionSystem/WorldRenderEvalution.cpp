@@ -23,10 +23,12 @@ WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : rende
 	my_consol_window_handle = GetConsoleWindow();
 	my_consol_menu = GetSystemMenu(my_consol_window_handle, false);
 	assert(my_console_input_handle && my_console_output_handle && my_consol_menu && my_consol_window_handle );
+
+
 	// screen
 	my_screen_is_updated = true;
-	my_screen_size = { 80,30 };
-	my_screen_rect = { 0,0,79,29 };
+	my_screen_size = { 100,45 };
+	my_screen_rect = { 0,0,my_screen_size.X-1,my_screen_size.Y - 1 };
 	my_screen_buffer = new CHAR_INFO[my_screen_size.X * my_screen_size.Y];
 	assert(my_screen_buffer);
 	for (WORD i = 0; i < my_screen_size.X * my_screen_size.Y; ++i)
@@ -35,6 +37,20 @@ WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : rende
 		my_screen_buffer[i].Char.AsciiChar = 'X';
 	}
 	initialize_console();
+	{
+		/*LPSTR message;
+		FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			GetLastError(),
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR)&message,
+			0, NULL);
+		MessageBox(my_consol_window_handle, message, "ERROR", MB_OK);
+		LocalFree(message);*/
+	}
 }
 
 WorldRenderEvalution::~WorldRenderEvalution()
@@ -64,17 +80,30 @@ void WorldRenderEvalution::initialize_console()
 		COLORREF_of(255,255,255),
 	};
 
-	// delete some menu-options to prevent the user from resizing
-	//DeleteMenu(sysMenu, SC_CLOSE, MF_BYCOMMAND);
-	DeleteMenu(my_consol_menu, SC_MINIMIZE, MF_BYCOMMAND);
-	DeleteMenu(my_consol_menu, SC_MAXIMIZE, MF_BYCOMMAND);
-	//DeleteMenu(my_consol_menu, SC_SIZE, MF_BYCOMMAND);
+
+	// initialize EventMode
+	DWORD console_mode = ENABLE_MOUSE_INPUT;
+
+	
+	DWORD err = GetLastError(); // just to debug
+	if (!SetConsoleMode(my_console_input_handle, console_mode))
+	{
+		err = GetLastError();
+		throw UsedExceptions::ExtendedException("Unable to set console mode.");
+		return;
+	};
 
 
 	// make Cursor invisible
 	CONSOLE_CURSOR_INFO cursor_info = CONSOLE_CURSOR_INFO();
 	cursor_info.bVisible = false;
 	cursor_info.dwSize = 3;
+	if (!SetConsoleCursorInfo(my_console_output_handle, &cursor_info) )
+	{
+		err = GetLastError();
+		throw UsedExceptions::ExtendedException("Unable to set cursor.");
+		return;
+	};
 
 
 	// set Console Info
@@ -84,36 +113,46 @@ void WorldRenderEvalution::initialize_console()
 	for (size_t i = 0; i < 16; ++i) screen_info.ColorTable[i] = color_table[i];
 	screen_info.dwCursorPosition.X = 0;
 	screen_info.dwCursorPosition.Y = 0;
-	screen_info.dwMaximumWindowSize.X = 0;
-	screen_info.dwMaximumWindowSize.Y = 0;
-	screen_info.dwSize.X = 69;
-	screen_info.dwSize.Y = 10;
-	screen_info.srWindow.Left = 0;
-	screen_info.srWindow.Right = 0;
+	screen_info.dwMaximumWindowSize.X = my_screen_size.X;	// needs to be one larger than the actual window (or not ... im confused)
+	screen_info.dwMaximumWindowSize.Y = my_screen_size.Y;
+	screen_info.dwSize.X = my_screen_size.X;			// characters in a row
+	screen_info.dwSize.Y = my_screen_size.Y;			// rows in the console
+	screen_info.srWindow.Left = 0;		// inklusive (show the character at this position)
 	screen_info.srWindow.Top = 0;
-	screen_info.srWindow.Bottom = 0;
+	screen_info.srWindow.Right = my_screen_size.X-1;	// inklusiv (will show the last) 
+	screen_info.srWindow.Bottom = my_screen_size.Y-1;	// so its the same as the amount of chars -1
 	screen_info.wAttributes = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY;
 	screen_info.wPopupAttributes = BACKGROUND_RED | FOREGROUND_BLUE;
-
-	// initialize EventMode
-	DWORD console_mode = ENABLE_MOUSE_INPUT;
-
-	if (!SetConsoleMode(my_console_input_handle, console_mode))
-	{
-		throw UsedExceptions::ExtendedException("Unable to set console mode.");
-		return;
-	};
-	if (!SetConsoleCursorInfo(my_console_output_handle, &cursor_info) )
-	{
-		throw UsedExceptions::ExtendedException("Unable to set cursor.");
-		return;
-	};
-	
 	if (!SetConsoleScreenBufferInfoEx(my_console_output_handle, &screen_info) )
 	{
+		err = GetLastError();
 		throw UsedExceptions::ExtendedException("Unable to set consolebuffer.");
 		return;
 	};
+
+
+	// Resize the window again
+	// since it seems like ScreenBufferinfo can't 
+	// generate a bigger window than previos info.dwMaximumWindowSize
+
+	if (!SetConsoleWindowInfo(my_console_output_handle, true, &my_screen_rect) )
+	{
+		err = GetLastError();
+		throw UsedExceptions::ExtendedException("Unable to set windowsize.");
+		return;
+	}
+	/*  //debugging
+	CONSOLE_SCREEN_BUFFER_INFOEX info;
+	info.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+	GetConsoleScreenBufferInfoEx(my_console_output_handle, &info);*/
+
+
+
+	// delete some menu-options to prevent the user from resizing
+	//DeleteMenu(sysMenu, SC_CLOSE, MF_BYCOMMAND);
+	DeleteMenu(my_consol_menu, SC_MINIMIZE, MF_BYCOMMAND);
+	DeleteMenu(my_consol_menu, SC_MAXIMIZE, MF_BYCOMMAND);
+	DeleteMenu(my_consol_menu, SC_SIZE, MF_BYCOMMAND);
 }
 
 void WorldRenderEvalution::render_entity(base::EntityBase *const entity, const float deltaTime)
@@ -133,7 +172,7 @@ void WorldRenderEvalution::step(const float deltaTime)
 		char str[80];
 		sprintf_s(str, "%d,%d   %d,%d", my_screen_rect.Left, my_screen_rect.Right, my_screen_rect.Top, my_screen_rect.Bottom );
 		SetConsoleTitle(str);
-		//my_screen_is_updated = false;
+		my_screen_is_updated = false;
 	}
 }
 
@@ -163,10 +202,8 @@ void WorldRenderEvalution::render_data(render::RenderData & pack, const float de
 
 void WorldRenderEvalution::render_text_data(render::RenderData & pack, const float deltaTime)
 {
-	CONSOLE_SCREEN_BUFFER_INFO *screen_info = new CONSOLE_SCREEN_BUFFER_INFO();
-	GetConsoleScreenBufferInfo(my_console_output_handle, screen_info);
-	SHORT console_height = 80;
-	SHORT console_width = 30;
+	SHORT console_width = my_screen_size.X;
+	SHORT console_height = my_screen_size.Y;
 
 	SHORT row = (int)((pack.bot_right.y + pack.top_left.y) * console_height * 0.5f);
 	SHORT start_collum = (int)(pack.top_left.x * console_width);
