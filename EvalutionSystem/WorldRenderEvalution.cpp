@@ -26,7 +26,8 @@ WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : rende
 
 
 	// screen
-	my_screen_is_updated = true;
+	my_screen_needs_update_complete = true;
+	my_screen_update_rect_count = 0;
 	my_screen_update_timer = 0.0f;
 	my_screen_size = { 100,45 };
 	my_screen_rect = { 0,0,my_screen_size.X-1,my_screen_size.Y - 1 };
@@ -153,12 +154,21 @@ void WorldRenderEvalution::step(const float deltaTime)
 	// do a update for all renderObjects
 	WorldRenderer::step(deltaTime);
 	my_screen_update_timer += deltaTime;
-	if ( my_screen_is_updated && my_screen_update_timer >= 0.2f)
+	if ( my_screen_needs_update_complete && my_screen_update_timer >= 0.2f)
 	{
 		my_screen_update_timer = 0.0f;
 		WriteConsoleOutput(my_console_output_handle, my_screen_buffer, my_screen_size, { 0,0 }, &my_screen_rect);
-		my_screen_is_updated = false;
+		my_screen_needs_update_complete = false;
 	}
+	else if (my_screen_update_rect_count > 0)
+	{
+		for (SHORT i = 0; i < my_screen_update_rect_count; ++i)
+		{
+			WriteConsoleOutput(my_console_output_handle,
+				my_screen_buffer, my_screen_size, {my_screen_updating_rects[i].Left,my_screen_updating_rects[i].Top}, &my_screen_updating_rects[i]);
+		}
+	}
+	my_screen_update_rect_count = 0;
 }
 
 void WorldRenderEvalution::render_data(render::RenderData & pack, const float deltaTime)
@@ -190,7 +200,7 @@ void WorldRenderEvalution::render_text_data(render::RenderData & pack, const flo
 	SHORT console_width = my_screen_size.X;
 	SHORT console_height = my_screen_size.Y;
 
-	SHORT row = (int)((pack.bot_right.y + pack.top_left.y) * console_height * 0.5f);
+	SHORT start_row = (int)((pack.bot_right.y + pack.top_left.y) * console_height * 0.5f);
 	SHORT start_collum = (int)(pack.top_left.x * console_width);
 	SHORT collums_to_write = (int)(pack.bot_right.x * console_width) - start_collum;
 
@@ -218,20 +228,36 @@ void WorldRenderEvalution::render_text_data(render::RenderData & pack, const flo
 
 	if (text != nullptr)
 	{
+		bool changed = false;
 		for (WORD i = 0; i < collums_to_write; ++i)
 		{
 			// TODO 
 			// safety check
 			// and updatecheck
 			if (text[i] == 0) break;
-			WORD index = start_collum * my_screen_size.X + i + row;
+			WORD index = start_collum * my_screen_size.X + i + start_row;
 			if (index < my_screen_size.X * my_screen_size.Y)
 			{
 				if (my_screen_buffer[index].Char.AsciiChar != text[i])
 				{
 					my_screen_buffer[index].Char.AsciiChar = text[i];
-					my_screen_is_updated = true;
+					changed = true;
 				}
+			}
+		}
+		if (changed)
+		{
+			if (my_screen_update_rect_count < 10)
+			{
+				my_screen_updating_rects[my_screen_update_rect_count].Left = start_collum;
+				my_screen_updating_rects[my_screen_update_rect_count].Top = start_row;
+				my_screen_updating_rects[my_screen_update_rect_count].Right = start_collum + collums_to_write;
+				my_screen_updating_rects[my_screen_update_rect_count].Bottom = start_row;
+				++my_screen_update_rect_count;
+			}
+			else
+			{
+				my_screen_needs_update_complete = true;
 			}
 		}
 	}

@@ -16,8 +16,12 @@ private:
 	COORD my_screen_size;
 	SMALL_RECT my_screen_rect;
 	CHAR_INFO *my_screen_buffer = nullptr;
-	bool my_screen_is_updated;
+
+	bool my_screen_needs_update_complete;
 	float my_screen_update_timer;
+	// up to 10 rectangles that can be updatet without refreshing the whole screen
+	SHORT my_screen_update_rect_count;
+	SMALL_RECT my_screen_updating_rects[10];
 public:
 	WorldRenderEvalution(base::WorldBase *const world);
 	virtual ~WorldRenderEvalution();
