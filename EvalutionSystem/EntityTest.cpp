@@ -7,14 +7,17 @@ EntityTest::EntityTest(float x,float y) : base::EntityBase(TYPE_ID)
 	counter = 0;
 	render::RenderData &render = this->add_renderpack();
 	render.draw_type = render::Draw_Type::TEXT;
-	render.top_left = render::ScreenPoint(x, y);
-	render.bot_right = render::ScreenPoint(x+0.1f, y);
+	render.position = render::ScreenRectangle(x, y, x + 0.01f, y);
 	render::RenderParameterText *text = new render::RenderParameterText();
-	render.data.insert(render.data.end(), text  );
+	render.data.insert(render.data.end(), text);
 	text->text = new char[10];
 	//sprintf_s(text->text, "%3d", 0u);
 	text->text[0] = 'H';
 	text->text[1] = 0;
+	render::RenderParameterColor *color = new render::RenderParameterColor();
+	render.data.insert(render.data.end(), color);
+	color->forground = render::Color(1, 1, 1);
+	color->forground= render::Color(0, 0, 0);
 }
 
 

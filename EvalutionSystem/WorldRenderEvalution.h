@@ -6,6 +6,8 @@ class WorldRenderEvalution : public render::WorldRenderer
 {
 
 private:
+	const WORD MAX_UPDATABLE_RECTANGLES = 10;
+	const WORD DEFAULT_TEXT_ATTRIBUTES = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY;
 private:
 	// consol and window handles
 	HANDLE my_console_input_handle = nullptr;
@@ -26,6 +28,7 @@ public:
 	WorldRenderEvalution(base::WorldBase *const world);
 	virtual ~WorldRenderEvalution();
 	virtual void initialize_console();
+	virtual void fill_screen_rect(const SMALL_RECT &target, const char *text, WORD textAttributes);
 
 
 	// Geerbt über WorldRenderer

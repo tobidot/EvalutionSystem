@@ -15,6 +15,29 @@ COLORREF COLORREF_of(uint8_t r, uint8_t g, uint8_t b)
 	return (b << 16) + (g << 8) + r;
 }
 
+WORD TEXT_ATTRIBUTES_of(const render::Color &color)
+{
+	WORD attrib = 0;
+	float heightest_intesity = max(max(max(color.r,color.g),color.b),0.33f);
+	if (color.r > heightest_intesity * 0.5f)
+	{
+		attrib |= FOREGROUND_RED;
+	}
+	if (color.g > heightest_intesity * 0.5f)
+	{
+		attrib |= FOREGROUND_GREEN;
+	}
+	if (color.b > heightest_intesity * 0.5f)
+	{
+		attrib |= FOREGROUND_BLUE;
+	}
+	if (heightest_intesity > 0.66f)
+	{
+		attrib |= FOREGROUND_INTENSITY;
+	}
+	return attrib;
+}
+
 WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : render::WorldRenderer(world)
 {
 	// get handles
@@ -35,7 +58,7 @@ WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : rende
 	assert(my_screen_buffer);
 	for (WORD i = 0; i < my_screen_size.X * my_screen_size.Y; ++i)
 	{
-		my_screen_buffer[i].Attributes = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		my_screen_buffer[i].Attributes =  FOREGROUND_INTENSITY | BACKGROUND_BLUE |BACKGROUND_GREEN |BACKGROUND_RED;
 		my_screen_buffer[i].Char.AsciiChar = 'X';
 	}
 	initialize_console();
@@ -143,6 +166,54 @@ void WorldRenderEvalution::initialize_console()
 	DeleteMenu(my_consol_menu, SC_SIZE, MF_BYCOMMAND);
 }
 
+void WorldRenderEvalution::fill_screen_rect(const SMALL_RECT & target, const char * text, WORD textAttributes)
+{
+	size_t text_len = strlen(text);
+	SHORT start_x = (target.Left+target.Right)/2-text_len;
+	SHORT start_y = (target.Top + target.Bottom)/2;
+	SHORT width = (target.Right - target.Left)+1;
+	SHORT height = (target.Bottom - target.Top) +1;
+	if (start_x < target.Left) start_x = target.Left;
+
+	bool changed = false;
+	for (WORD j= 0; j < height; ++j)
+	{
+		for (WORD i = 0; i < width; ++i)
+		{
+			if (text[j*width + i] == 0)
+			{	// by reaching end of text end the loop
+				j = height;
+				break;
+			}
+			const SHORT x = start_x + i;
+			const SHORT y = start_y + j;
+			WORD index = y * my_screen_size.X + x;
+			if ( index < my_screen_size.X * my_screen_size.Y)
+			{	// i can now update the Pixel
+				if (my_screen_buffer[index].Char.AsciiChar != text[i] || my_screen_buffer[index].Attributes != textAttributes)
+				{	// screen actually changed
+					my_screen_buffer[index].Char.AsciiChar = text[i];
+					my_screen_buffer[index].Attributes = textAttributes;
+					changed = true;
+				}
+			}
+		}
+	}
+	// keep track of the change
+	if (changed)
+	{
+		if (my_screen_update_rect_count < MAX_UPDATABLE_RECTANGLES)
+		{	// store the updated part of the screen
+			my_screen_updating_rects[my_screen_update_rect_count] = target;
+			++my_screen_update_rect_count;
+		}
+		else
+		{	// maximum of updating rects was used -> screen needs full update
+			my_screen_needs_update_complete = true;
+		}
+	}
+}
+
 void WorldRenderEvalution::render_entity(base::EntityBase *const entity, const float deltaTime)
 {
 	entity->for_all_renderpacks([this,deltaTime](render::RenderData &pack) {render_data(pack,deltaTime); });
@@ -197,24 +268,20 @@ void WorldRenderEvalution::render_data(render::RenderData & pack, const float de
 
 void WorldRenderEvalution::render_text_data(render::RenderData & pack, const float deltaTime)
 {
-	SHORT console_width = my_screen_size.X;
-	SHORT console_height = my_screen_size.Y;
-
-	SHORT start_row = (int)((pack.bot_right.y + pack.top_left.y) * console_height * 0.5f);
-	SHORT start_collum = (int)(pack.top_left.x * console_width);
-	SHORT collums_to_write = (int)(pack.bot_right.x * console_width) - start_collum;
-
 	// Ich weis, dass ich Text zeichne
 	char *text = nullptr;
-	render::Color text_color;
-	render::Color text_bg_color;
+	WORD attributes = DEFAULT_TEXT_ATTRIBUTES;
 	// fill needed parameters with data 
 	for (render::RenderParameter *param : pack.data)
 	{
 		if (param->type_id == render::RenderParameterColor::TYPE_ID)
 		{
+			render::Color text_color;
+			render::Color text_bg_color;
 			text_color = static_cast<render::RenderParameterColor*>(param)->forground;
 			text_bg_color = static_cast<render::RenderParameterColor*>(param)->background;
+			// convert color to attributes
+			attributes = TEXT_ATTRIBUTES_of(text_color) | (TEXT_ATTRIBUTES_of(text_bg_color) * BACKGROUND_BLUE);
 		}
 		else if (param->type_id == render::RenderParameterText::TYPE_ID)
 		{
@@ -226,44 +293,23 @@ void WorldRenderEvalution::render_text_data(render::RenderData & pack, const flo
 		}
 	}
 
+	SHORT console_width = my_screen_size.X;
+	SHORT console_height = my_screen_size.Y;
+	const render::ScreenPoint &center = pack.position.get_center();
+
+	SMALL_RECT position = {
+		(SHORT)(pack.position.left_top.x * console_width),
+		(SHORT)(center.y * console_height),
+		(SHORT)(pack.position.bottom_right.x * console_width),
+		(SHORT)(center.y * console_height) };
 	if (text != nullptr)
 	{
-		bool changed = false;
-		for (WORD i = 0; i < collums_to_write; ++i)
-		{
-			// TODO 
-			// safety check
-			// and updatecheck
-			if (text[i] == 0) break;
-			WORD index = start_collum * my_screen_size.X + i + start_row;
-			if (index < my_screen_size.X * my_screen_size.Y)
-			{
-				if (my_screen_buffer[index].Char.AsciiChar != text[i])
-				{
-					my_screen_buffer[index].Char.AsciiChar = text[i];
-					changed = true;
-				}
-			}
-		}
-		if (changed)
-		{
-			if (my_screen_update_rect_count < 10)
-			{
-				my_screen_updating_rects[my_screen_update_rect_count].Left = start_collum;
-				my_screen_updating_rects[my_screen_update_rect_count].Top = start_row;
-				my_screen_updating_rects[my_screen_update_rect_count].Right = start_collum + collums_to_write;
-				my_screen_updating_rects[my_screen_update_rect_count].Bottom = start_row;
-				++my_screen_update_rect_count;
-			}
-			else
-			{
-				my_screen_needs_update_complete = true;
-			}
-		}
+		fill_screen_rect(position, text, attributes);
 	}
 	else
 	{
 		// TODO insufficient Parameter exception
+		throw "insufficient parameter";
 	}
 
 

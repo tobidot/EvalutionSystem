@@ -8,15 +8,10 @@ namespace render
 	{
 	public:
 		/*
-		position on Screen for the TopLeft Point of the RenderObject
-		going from 0 to 1 (left - right, top - bottom)
-		*/
-		ScreenPoint top_left;
-		/*
 		position on Screen for the BottomRight Point of the RenderObject
 		going from 0 to 1 (left - right, top - bottom)
 		*/
-		ScreenPoint bot_right;
+		ScreenRectangle position;
 		// different predefined types of renderMethods
 		Draw_Type draw_type;
 		// array of RenderParameters to support more data 

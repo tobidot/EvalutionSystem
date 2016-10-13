@@ -11,8 +11,7 @@
 
 // i can easily cofigure my world here
 void initialize(WorldEvalution &world)
-{
-	
+{	
 	for (int i = 0; i < 10; ++i)
 	{
 		world.entity_create(new EntityTest((rand()%50)/50.0f, (rand() % 50) / 50.0f));
