@@ -11,6 +11,8 @@ public:
 	float get() const;
 	// returns time past since last call of reset in nanoseconds
 	float get_nanoseconds() const;
+	// returns time past since last call of reset in microseconds
+	float get_microseconds() const;
 	// returns time past since last call of reset in miliseconds
 	float get_miliseconds() const;
 	// returns time past since last call of reset in seconds

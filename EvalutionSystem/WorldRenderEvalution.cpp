@@ -12,7 +12,7 @@
 
 COLORREF COLORREF_of(uint8_t r, uint8_t g, uint8_t b)
 {
-	return b + (g << 8) + (r << 16);
+	return (b << 16) + (g << 8) + r;
 }
 
 WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : render::WorldRenderer(world)
@@ -27,30 +27,17 @@ WorldRenderEvalution::WorldRenderEvalution(base::WorldBase *const world) : rende
 
 	// screen
 	my_screen_is_updated = true;
+	my_screen_update_timer = 0.0f;
 	my_screen_size = { 100,45 };
 	my_screen_rect = { 0,0,my_screen_size.X-1,my_screen_size.Y - 1 };
 	my_screen_buffer = new CHAR_INFO[my_screen_size.X * my_screen_size.Y];
 	assert(my_screen_buffer);
 	for (WORD i = 0; i < my_screen_size.X * my_screen_size.Y; ++i)
 	{
-		my_screen_buffer[i].Attributes = FOREGROUND_BLUE | BACKGROUND_GREEN;
+		my_screen_buffer[i].Attributes = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 		my_screen_buffer[i].Char.AsciiChar = 'X';
 	}
 	initialize_console();
-	{
-		/*LPSTR message;
-		FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			GetLastError(),
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPTSTR)&message,
-			0, NULL);
-		MessageBox(my_consol_window_handle, message, "ERROR", MB_OK);
-		LocalFree(message);*/
-	}
 }
 
 WorldRenderEvalution::~WorldRenderEvalution()
@@ -62,21 +49,21 @@ void WorldRenderEvalution::initialize_console()
 	COLORREF color_table[16] = {
 		// dark colors
 		COLORREF_of(0,0,0),
-		COLORREF_of(127,0,0),
-		COLORREF_of(0,127,0),
 		COLORREF_of(0,0,127),
-		COLORREF_of(127,127,0),
-		COLORREF_of(127,0,127),
+		COLORREF_of(0,127,0),
 		COLORREF_of(0,127,127),
+		COLORREF_of(127,0,0),
+		COLORREF_of(127,0,127),
+		COLORREF_of(127,127,0),
 		COLORREF_of(127,127,127),
 		// light colors
 		COLORREF_of(63,63,63),
-		COLORREF_of(255,0,0),
-		COLORREF_of(0,255,0),
 		COLORREF_of(0,0,255),
-		COLORREF_of(255,255,0),
-		COLORREF_of(255,0,255),
+		COLORREF_of(0,255,0),
 		COLORREF_of(0,255,255),
+		COLORREF_of(255,0,0),
+		COLORREF_of(255,0,255),
+		COLORREF_of(255,255,0),
 		COLORREF_of(255,255,255),
 	};
 
@@ -165,13 +152,11 @@ void WorldRenderEvalution::step(const float deltaTime)
 	process_console_inputs(deltaTime);
 	// do a update for all renderObjects
 	WorldRenderer::step(deltaTime);
-	if ( my_screen_is_updated )
+	my_screen_update_timer += deltaTime;
+	if ( my_screen_is_updated && my_screen_update_timer >= 0.2f)
 	{
+		my_screen_update_timer = 0.0f;
 		WriteConsoleOutput(my_console_output_handle, my_screen_buffer, my_screen_size, { 0,0 }, &my_screen_rect);
-		// TODO test y_screen rect
-		char str[80];
-		sprintf_s(str, "%d,%d   %d,%d", my_screen_rect.Left, my_screen_rect.Right, my_screen_rect.Top, my_screen_rect.Bottom );
-		SetConsoleTitle(str);
 		my_screen_is_updated = false;
 	}
 }

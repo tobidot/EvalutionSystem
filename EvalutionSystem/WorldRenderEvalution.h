@@ -17,6 +17,7 @@ private:
 	SMALL_RECT my_screen_rect;
 	CHAR_INFO *my_screen_buffer = nullptr;
 	bool my_screen_is_updated;
+	float my_screen_update_timer;
 public:
 	WorldRenderEvalution(base::WorldBase *const world);
 	virtual ~WorldRenderEvalution();
